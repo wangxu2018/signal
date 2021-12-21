@@ -34,8 +34,13 @@ int main(int argc, char *argv[])
 {
     pid_t pid;
 
-// todo:阻塞
-    int i; 
+	// 阻塞,防止子进程还没有等父进程注册完就退出
+    sigset_t set;
+	sigemptyset(&set);
+	sigaddset(&set, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &set, NULL);
+
+	int i; 
     for (i = 0; i < 15; i++) {
         if ((pid = fork()) == 0) {             // 创建多个子进程
             break;
@@ -50,9 +55,11 @@ int main(int argc, char *argv[])
         act.sa_flags = 0;                       // 设置默认属性, 本信号自动屏蔽
 
         sigaction(SIGCHLD, &act, NULL);         // 注册信号捕捉函数
-// todo:解除阻塞
-
-        printf("I'm parent, pid = %d\n", getpid());
+		
+		// 解除阻塞
+		sigprocmask(SIG_UNBLOCK, &set, NULL);
+        
+		printf("I'm parent, pid = %d\n", getpid());
 
         while (1);
 
